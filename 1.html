@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anonymous Chat Room</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .setup-container, .chat-container {
+            width: 100%;
+            max-width: 600px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .setup-container {
+            padding: 40px;
+        }
+        
+        .setup-container h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .setup-container p {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 14px;
+            outline: none;
+        }
+        
+        .form-group input:focus {
+            border-color: #667eea;
+        }
+        
+        .avatar-selector {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .avatar-option {
+            font-size: 2em;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            border: 3px solid transparent;
+            border-radius: 10px;
+            transition: all 0.2s;
+        }
+        
+        .avatar-option:hover {
+            background: #f7f9fc;
+        }
+        
+        .avatar-option.selected {
+            border-color: #667eea;
+            background: #f7f9fc;
+        }
+        
+        .join-button {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin-top: 20px;
+        }
+        
+        .join-button:hover {
+            transform: scale(1.02);
+        }
+        
+        .join-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .error-message {
+            background: #fee;
+            color: #c33;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: none;
+        }
+        
+        .chat-container {
+            display: none;
+            flex-direction: column;
+            height: 600px;
+        }
+        
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+        }
+        
+        .chat-header h1 {
+            font-size: 1.5em;
+            margin-bottom: 5px;
+        }
+        
+        .chat-header p {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f7f9fc;
+        }
+        
+        .message {
+            margin-bottom: 15px;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .message-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        
+        .avatar {
+            font-size: 1.5em;
+            margin-right: 10px;
+        }
+        
+        .username {
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .timestamp {
+            font-size: 0.75em;
+            color: #999;
+            margin-left: 10px;
+        }
+        
+        .message-text {
+            background: white;
+            padding: 12px 15px;
+            border-radius: 10px;
+            margin-left: 40px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .system-message {
+            text-align: center;
+            color: #999;
+            font-size: 0.85em;
+            padding: 10px;
+            font-style: italic;
+        }
+        
+        .chat-input {
+            padding: 20px;
+            background: white;
+            border-top: 2px solid #e2e8f0;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .chat-input input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 14px;
+            outline: none;
+        }
+        
+        .chat-input input:focus {
+            border-color: #667eea;
+        }
+        
+        .chat-input button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 10px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .chat-input button:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <!-- Setup Screen -->
+    <div class="setup-container" id="setupScreen">
+        <h1>🎭 Join Anonymous Chat</h1>
+        <p>Create your temporary identity for this room</p>
+        
+        <div class="form-group">
+            <label>Room Code</label>
+            <input type="text" id="roomCode" placeholder="Enter room code (e.g., Gaming)" value="Gaming">
+        </div>
+        
+        <div class="form-group">
+            <label>Your Anonymous Name</label>
+            <input type="text" id="username" placeholder="Choose a name..." maxlength="20">
+        </div>
+        
+        <div class="form-group">
+            <label>Choose Your Avatar</label>
+            <div class="avatar-selector">
+                <div class="avatar-option" data-avatar="🎮">🎮</div>
+                <div class="avatar-option" data-avatar="😎">😎</div>
+                <div class="avatar-option" data-avatar="🦉">🦉</div>
+                <div class="avatar-option" data-avatar="🐱">🐱</div>
+                <div class="avatar-option" data-avatar="🚀">🚀</div>
+                <div class="avatar-option" data-avatar="⚡">⚡</div>
+                <div class="avatar-option" data-avatar="🎨">🎨</div>
+                <div class="avatar-option" data-avatar="🎵">🎵</div>
+                <div class="avatar-option" data-avatar="🌟">🌟</div>
+                <div class="avatar-option" data-avatar="🔥">🔥</div>
+                <div class="avatar-option" data-avatar="💎">💎</div>
+                <div class="avatar-option" data-avatar="🌈">🌈</div>
+            </div>
+        </div>
+        
+        <button class="join-button" onclick="joinRoom()">Join Room</button>
+        <div class="error-message" id="errorMessage"></div>
+    </div>
+    
+    <!-- Chat Screen -->
+    <div class="chat-container" id="chatScreen">
+        <div class="chat-header">
+            <h1 id="roomTitle">🎮 Chat Room</h1>
+            <p id="roomInfo">Loading...</p>
+        </div>
+        
+        <div class="chat-messages" id="messages"></div>
+        
+        <div class="chat-input">
+            <input type="text" id="messageInput" placeholder="Type a message..." />
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp, doc, setDoc, getDoc, updateDoc, increment } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBqLir-V7QxxwVmD1M7Z3gQbqKKRUzbCI8",
+            authDomain: "boxroom-8893b.firebaseapp.com",
+            projectId: "boxroom-8893b",
+            storageBucket: "boxroom-8893b.firebasestorage.app",
+            messagingSenderId: "563753805688",
+            appId: "1:563753805688:web:86f1fec009296ce8958a8d",
+            measurementId: "G-6SFG38RVQ7"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Global variables
+        let currentUser = null;
+        let currentRoom = null;
+        let selectedAvatar = null;
+        let unsubscribe = null;
+
+        // Avatar selection
+        document.querySelectorAll('.avatar-option').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('.avatar-option').forEach(opt => opt.classList.remove('selected'));
+                this.classList.add('selected');
+                selectedAvatar = this.getAttribute('data-avatar');
+            });
+        });
+
+        // Join room function
+        window.joinRoom = async function() {
+            const username = document.getElementById('username').value.trim();
+            const roomCode = document.getElementById('roomCode').value.trim();
+            const errorDiv = document.getElementById('errorMessage');
+
+            if (!username) {
+                errorDiv.textContent = 'Please enter a username';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            if (!roomCode) {
+                errorDiv.textContent = 'Please enter a room code';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            if (!selectedAvatar) {
+                errorDiv.textContent = 'Please select an avatar';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            try {
+                const roomRef = doc(db, 'rooms', roomCode);
+                const roomDoc = await getDoc(roomRef);
+
+                // Check room capacity
+                if (roomDoc.exists()) {
+                    const roomData = roomDoc.data();
+                    if (roomData.userCount >= 15) {
+                        errorDiv.textContent = 'This room is full (15/15 users)';
+                        errorDiv.style.display = 'block';
+                        return;
+                    }
+                    // Increment user count
+                    await updateDoc(roomRef, {
+                        userCount: increment(1)
+                    });
+                } else {
+                    // Create new room
+                    await setDoc(roomRef, {
+                        name: roomCode,
+                        createdAt: serverTimestamp(),
+                        userCount: 1
+                    });
+                }
+
+                // Set current user and room
+                currentUser = {
+                    name: username,
+                    avatar: selectedAvatar
+                };
+                currentRoom = roomCode;
+
+                // Switch to chat screen
+                document.getElementById('setupScreen').style.display = 'none';
+                document.getElementById('chatScreen').style.display = 'flex';
+                document.getElementById('roomTitle').textContent = `${selectedAvatar} ${roomCode}`;
+
+                // Load messages
+                loadMessages();
+
+                // Send join notification
+                await addDoc(collection(db, 'rooms', currentRoom, 'messages'), {
+                    type: 'system',
+                    text: `${username} joined the room`,
+                    timestamp: serverTimestamp()
+                });
+
+            } catch (error) {
+                console.error('Error joining room:', error);
+                errorDiv.textContent = 'Error joining room. Please try again.';
+                errorDiv.style.display = 'block';
+            }
+        };
+
+        // Load messages
+        function loadMessages() {
+            const messagesRef = collection(db, 'rooms', currentRoom, 'messages');
+            const q = query(messagesRef, orderBy('timestamp', 'asc'), limit(100));
+
+            unsubscribe = onSnapshot(q, async (snapshot) => {
+                const messagesDiv = document.getElementById('messages');
+                
+                snapshot.docChanges().forEach((change) => {
+                    if (change.type === 'added') {
+                        const data = change.doc.data();
+                        addMessageToUI(data);
+                    }
+                });
+
+                // Update user count
+                const roomRef = doc(db, 'rooms', currentRoom);
+                const roomDoc = await getDoc(roomRef);
+                if (roomDoc.exists()) {
+                    const userCount = roomDoc.data().userCount || 1;
+                    document.getElementById('roomInfo').textContent = `${userCount}/15 users online`;
+                }
+            });
+        }
+
+        // Add message to UI
+        function addMessageToUI(data) {
+            const messagesDiv = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+
+            if (data.type === 'system') {
+                messageDiv.className = 'system-message';
+                messageDiv.textContent = data.text;
+            } else {
+                messageDiv.className = 'message';
+                
+                const time = data.timestamp ? new Date(data.timestamp.toDate()).toLocaleTimeString('en-US', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                }) : 'Now';
+
+                messageDiv.innerHTML = `
+                    <div class="message-header">
+                        <span class="avatar">${data.avatar}</span>
+                        <span class="username">${data.username}</span>
+                        <span class="timestamp">${time}</span>
+                    </div>
+                    <div class="message-text">${escapeHtml(data.text)}</div>
+                `;
+            }
+
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        // Send message
+        window.sendMessage = async function() {
+            const input = document.getElementById('messageInput');
+            const text = input.value.trim();
+
+            if (text && currentUser && currentRoom) {
+                try {
+                    await addDoc(collection(db, 'rooms', currentRoom, 'messages'), {
+                        type: 'message',
+                        username: currentUser.name,
+                        avatar: currentUser.avatar,
+                        text: text,
+                        timestamp: serverTimestamp()
+                    });
+                    input.value = '';
+                } catch (error) {
+                    console.error('Error sending message:', error);
+                }
+            }
+        };
+
+        // Enter key to send
+        document.addEventListener('DOMContentLoaded', () => {
+            const messageInput = document.getElementById('messageInput');
+            if (messageInput) {
+                messageInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        sendMessage();
+                    }
+                });
+            }
+        });
+
+        // Escape HTML to prevent XSS
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', async () => {
+            if (currentRoom && currentUser) {
+                const roomRef = doc(db, 'rooms', currentRoom);
+                try {
+                    await updateDoc(roomRef, {
+                        userCount: increment(-1)
+                    });
+                } catch (error) {
+                    console.error('Error leaving room:', error);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
